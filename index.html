@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonar Audiobooks Project NPV Analysis</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #253B53;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f7f4;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 40px;
+        }
+        
+        h1, h2, h3, h4 {
+            color: #253B53;
+            margin-top: 0;
+            font-weight: 600;
+        }
+        
+        h1 {
+            font-size: 30px;
+            border-bottom: 2px solid #eaecef;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        h2 {
+            font-size: 24px;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 10px;
+            margin: 40px 0 20px;
+            color: #253B53;
+        }
+        
+        h3 {
+            font-size: 20px;
+            margin: 25px 0 15px;
+            color: #253B53;
+        }
+        
+        p {
+            margin-bottom: 16px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        
+        th, td {
+            padding: 14px 18px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        th {
+            background-color: #f5f7fa;
+            font-weight: 600;
+            color: #253B53;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9fafc;
+        }
+        
+        .highlight {
+            background-color: #eef5ff;
+            padding: 24px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border-left: 5px solid #7BACC2;
+        }
+        
+        .summary-box {
+            background-color: #f0f6ff;
+            border-left: 6px solid #7BACC2;
+            padding: 24px;
+            margin: 30px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .warning-box {
+            background-color: #fff8f0;
+            border-left: 6px solid #E37F5D;
+            padding: 24px;
+            margin: 30px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .uncertainty {
+            color: #718096;
+            font-size: 0.85em;
+            font-style: italic;
+        }
+        
+        .profit {
+            color: #38a169;
+            font-weight: 600;
+        }
+        
+        .loss {
+            color: #e53e3e;
+            font-weight: 600;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 30px;
+            background-color: #f7fafc;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-value {
+            font-size: 34px;
+            font-weight: bold;
+            margin: 16px 0;
+            color: #253B53;
+        }
+        
+        .metric-title {
+            font-size: 16px;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .small-text {
+            font-size: 13px;
+            color: #4a5568;
+            line-height: 1.6;
+            margin-top: 16px;
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .chart-container {
+            margin: 40px 0;
+            padding: 40px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        ul, ol {
+            padding-left: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #718096;
+        }
+        
+        .references {
+            margin-top: 40px;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .references h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        
+        .references ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .references li {
+            padding: 8px 0;
+            border-bottom: 1px dotted #e2e8f0;
+        }
+        
+        .references a {
+            color: #7BACC2;
+            text-decoration: none;
+        }
+        
+        .references a:hover {
+            text-decoration: underline;
+        }
+        
+        .range {
+            font-size: 0.85em;
+            color: #718096;
+        }
+        
+        .accent-color {
+            color: #7BACC2;
+        }
+        
+        .secondary-accent {
+            color: #E37F5D;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sonar Audiobooks - B2B First Strategy NPV Analysis</h1>
+        
+        <div class="summary-box">
+            <h2 style="border: none; margin-top: 0; margin-bottom: 20px;">Executive Summary</h2>
+            <p>This analysis presents a 5-year financial projection for the Thai audiobook conversion project with an initial B2B focus. The project leverages LLM technology for book translation and audio conversion, with a realistic production capacity of 500 books per year and carefully considered user acquisition costs.</p>
+            
+            <div class="grid">
+                <div class="metric-card">
+                    <div class="metric-title">5-Year NPV</div>
+                    <div class="metric-value">฿3.28 million</div>
+                    <div class="range">Range: ฿2.95M - ฿3.61M</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">IRR</div>
+                    <div class="metric-value">37.9%</div>
+                    <div class="range">Range: 34.1% - 41.7%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Break-Even</div>
+                    <div class="metric-value">Year 3</div>
+                    <div class="range">Cumulative profitability</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="warning-box">
+            <h3 style="margin-top: 0;">Safety Nets & Uncertainty Considerations</h3>
+            <p>This revised analysis incorporates several safety nets and uncertainty considerations:</p>
+            <ul>
+                <li><strong>CPI Variance:</strong> Thailand's CPI ranges from $1.50-$2.50, with our model using $2.00 (฿71.42)</li>
+                <li><strong>15% Cost Buffer:</strong> All operational costs include a 15% buffer for unexpected expenses</li>
+                <li><strong>Conservative B2C Revenue:</strong> B2C revenue projections have been reduced by 15-20% for prudence</li>
+                <li><strong>Founder Compensation:</strong> First-year competitive founder compensation included</li>
+                <li><strong>GPU Cost Adjustment:</strong> Updated A100 pricing at $1.15/hour (฿41.06) based on current market rates</li>
+                <li><strong>Higher QA Standards:</strong> Increased quality assurance costs by 25% to ensure premium audio quality</li>
+                <li><strong>Uncertainty Ranges:</strong> All financial projections include ±10% uncertainty ranges</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Project Approach</h2>
+            <p>The project adopts a phased approach, focusing first on B2B services for publishers before expanding to B2C offerings:</p>
+            
+            <div class="two-column">
+                <div class="card">
+                    <h3>Phase 1: B2B Focus (Years 1-2)</h3>
+                    <ul>
+                        <li>Provide audiobook conversion services to publishers</li>
+                        <li>Build technology infrastructure and processes</li>
+                        <li>Establish publisher relationships and quality standards</li>
+                        <li>Develop B2C platform in Year 2 while generating B2B revenue</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3>Phase 2: B2C Expansion (Years 3-5)</h3>
+                    <ul>
+                        <li>Launch consumer platform in Year 3</li>
+                        <li>Maintain B2B services while growing B2C user base</li>
+                        <li>Strategic user acquisition with controlled CPI spend</li>
+                        <li>Gradual growth to 40,000 users by Year 5</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="highlight">
+                <h3 style="margin-top: 0;">Core Technology</h3>
+                <p>The project utilizes 3× A100-8G GPUs for AI processing with two primary conversion workflows:</p>
+                <ul>
+                    <li><strong>Thai → Thai Audio:</strong> Direct conversion from Thai text to Thai audiobook</li>
+                    <li><strong>English → Thai Audio:</strong> Translation and conversion from English text to Thai audiobook</li>
+                </ul>
+                <p>Each conversion undergoes rigorous quality assurance and professional editing to ensure high-quality output.</p>
+                <p class="uncertainty">GPU pricing based on Paperspace A100-8G at $1.15/hour (฿41.06/hour), reflecting current competitive market rates. Prices may fluctuate by ±10% based on provider and commitment terms.</p>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h2 style="text-align: center; border: none; margin-bottom: 30px;">Financial Performance Indicators</h2>
+            <svg width="100%" height="530" style="overflow: visible">
+                <!-- Background with proper spacing -->
+                <rect x="80" y="60" width="800" height="350" fill="#f7fafc" rx="8" ry="8"/>
+                
+                <!-- Chart Title -->
+                <text x="480" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#253B53">Annual Revenue, Costs & Profit Margins</text>
+                
+                <!-- Axes -->
+                <line x1="160" y1="350" x2="800" y2="350" stroke="#a0aec0" stroke-width="2"/>
+                <line x1="160" y1="350" x2="160" y2="100" stroke="#a0aec0" stroke-width="2"/>
+                
+                <!-- Y-axis title -->
+                <text x="100" y="225" text-anchor="middle" font-size="14" fill="#4a5568" transform="rotate(-90, 100, 225)">Amount (Million ฿)</text>
+                
+                <!-- Y-axis labels -->
+                <text x="150" y="350" text-anchor="end" alignment-baseline="middle" font-size="13" fill="#4a5568">0</text>
+                <text x="150" y="300" text-anchor="end" alignment-baseline="middle" font-size="13" fill="#4a5568">2</text>
+                <text x="150" y="250" text-anchor="end" alignment-baseline="middle" font-size="13" fill="#4a5568">4</text>
+                <text x="150" y="200" text-anchor="end" alignment-baseline="middle" font-size="13" fill="#4a5568">6</text>
+                <text x="150" y="150" text-anchor="end" alignment-baseline="middle" font-size="13" fill="#4a5568">8</text>
+                <text x="150" y="100" text-anchor="end" alignment-baseline="middle" font-size="13" fill="#4a5568">10</text>
+                
+                <!-- Horizontal grid lines -->
+                <line x1="160" y1="350" x2="800" y2="350" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="5,5"/>
+                <line x1="160" y1="300" x2="800" y2="300" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="5,5"/>
+                <line x1="160" y1="250" x2="800" y2="250" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="5,5"/>
+                <line x1="160" y1="200" x2="800" y2="200" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="5,5"/>
+                <line x1="160" y1="150" x2="800" y2="150" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="5,5"/>
+                <line x1="160" y1="100" x2="800" y2="100" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="5,5"/>
+                
+                <!-- X-axis title - Moved to avoid overlapping -->
+                <text x="480" y="410" text-anchor="middle" font-size="14" fill="#4a5568">Fiscal Year</text>
+                
+                <!-- Year 1 -->
+                <rect x="210" y="324" width="40" height="26" rx="4" ry="4" fill="#7BACC2" opacity="0.8" />
+                <rect x="260" y="300" width="40" height="50" rx="4" ry="4" fill="#E37F5D" opacity="0.8" />
+                <text x="255" y="370" text-anchor="middle" font-size="14" font-weight="bold" fill="#253B53">2025-26</text>
+                <text x="255" y="390" text-anchor="middle" font-size="12" fill="#e53e3e">-25.9%</text>
+                
+                <!-- Year 2 -->
+                <rect x="330" y="312" width="40" height="38" rx="4" ry="4" fill="#7BACC2" opacity="0.8" />
+                <rect x="380" y="280" width="40" height="70" rx="4" ry="4" fill="#E37F5D" opacity="0.8" />
+                <text x="375" y="370" text-anchor="middle" font-size="14" font-weight="bold" fill="#253B53">2026-27</text>
+                <text x="375" y="390" text-anchor="middle" font-size="12" fill="#e53e3e">-61.1%</text>
+                
+                <!-- Year 3 -->
+                <rect x="450" y="227" width="40" height="123" rx="4" ry="4" fill="#7BACC2" opacity="0.8" />
+                <rect x="500" y="190" width="40" height="160" rx="4" ry="4" fill="#E37F5D" opacity="0.8" />
+                <text x="495" y="370" text-anchor="middle" font-size="14" font-weight="bold" fill="#253B53">2027-28</text>
+                <text x="495" y="390" text-anchor="middle" font-size="12" fill="#e53e3e">-13.0%</text>
+                
+                <!-- Year 4 -->
+                <rect x="570" y="185" width="40" height="165" rx="4" ry="4" fill="#7BACC2" opacity="0.8" />
+                <rect x="620" y="170" width="40" height="180" rx="4" ry="4" fill="#E37F5D" opacity="0.8" />
+                <text x="615" y="370" text-anchor="middle" font-size="14" font-weight="bold" fill="#253B53">2028-29</text>
+                <text x="615" y="390" text-anchor="middle" font-size="12" fill="#38a169">19.4%</text>
+                
+                <!-- Year 5 -->
+                <rect x="690" y="146" width="40" height="204" rx="4" ry="4" fill="#7BACC2" opacity="0.8" />
+                <rect x="740" y="144" width="40" height="206" rx="4" ry="4" fill="#E37F5D" opacity="0.8" />
+                <text x="735" y="370" text-anchor="middle" font-size="14" font-weight="bold" fill="#253B53">2029-30</text>
+                <text x="735" y="390" text-anchor="middle" font-size="12" fill="#38a169">23.7%</text>
+                
+                <!-- Legend -->
+                <rect x="600" y="80" width="20" height="20" rx="4" ry="4" fill="#7BACC2" opacity="0.8" />
+                <text x="630" y="95" text-anchor="start" font-size="13" fill="#253B53">Revenue</text>
+                <rect x="700" y="80" width="20" height="20" rx="4" ry="4" fill="#E37F5D" opacity="0.8" />
+                <text x="730" y="95" text-anchor="start" font-size="13" fill="#253B53">Costs</text>
+                
+                <!-- Additional chart annotations -->
+                <text x="480" y="430" text-anchor="middle" font-size="13" fill="#4a5568">Percentages represent profit margins</text>
+                <text x="480" y="450" text-anchor="middle" font-size="13" fill="#4a5568">Cumulative break-even occurs in Year 3</text>
+            </svg>
+        </div>
+        
+        <div class="section">
+            <h2>Financial Projections (with 10% Uncertainty Range)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Revenue (฿)</th>
+                        <th>Costs (฿)</th>
+                        <th>Marketing & UA (฿)</th>
+                        <th>Profit (฿)</th>
+                        <th>Margin %</th>
+                        <th>DCF (8%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2025-26</td>
+                        <td>1,350,000 <span class="range">±135K</span></td>
+                        <td>1,330,000 <span class="range">±133K</span></td>
+                        <td>180,000 <span class="range">±18K</span></td>
+                        <td class="loss">-350,000 <span class="range">±35K</span></td>
+                        <td class="loss">-25.9%</td>
+                        <td class="loss">-324,074 <span class="range">±32K</span></td>
+                    </tr>
+                    <tr>
+                        <td>2026-27</td>
+                        <td>1,800,000 <span class="range">±180K</span></td>
+                        <td>2,600,000 <span class="range">±260K</span></td>
+                        <td>300,000 <span class="range">±30K</span></td>
+                        <td class="loss">-1,100,000 <span class="range">±110K</span></td>
+                        <td class="loss">-61.1%</td>
+                        <td class="loss">-943,074 <span class="range">±94K</span></td>
+                    </tr>
+                    <tr>
+                        <td>2027-28</td>
+                        <td>5,750,000 <span class="range">±575K</span></td>
+                        <td>4,500,000 <span class="range">±450K</span></td>
+                        <td>2,200,000 <span class="range">±220K</span></td>
+                        <td class="loss">-750,000 <span class="range">±75K</span></td>
+                        <td class="loss">-13.0%</td>
+                        <td class="loss">-596,065 <span class="range">±60K</span></td>
+                    </tr>
+                    <tr>
+                        <td>2028-29</td>
+                        <td>7,750,000 <span class="range">±775K</span></td>
+                        <td>5,100,000 <span class="range">±510K</span></td>
+                        <td>1,150,000 <span class="range">±115K</span></td>
+                        <td class="profit">1,500,000 <span class="range">±150K</span></td>
+                        <td class="profit">19.4%</td>
+                        <td class="profit">1,106,823 <span class="range">±111K</span></td>
+                    </tr>
+                    <tr>
+                        <td>2029-30</td>
+                        <td>9,650,000 <span class="range">±965K</span></td>
+                        <td>6,220,000 <span class="range">±622K</span></td>
+                        <td>1,150,000 <span class="range">±115K</span></td>
+                        <td class="profit">2,280,000 <span class="range">±228K</span></td>
+                        <td class="profit">23.7%</td>
+                        <td class="profit">1,559,749 <span class="range">±156K</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align: right;"><strong>5-Year NPV:</strong></td>
+                        <td class="profit">3,275,120 <span class="range">±328K</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="small-text">
+                <p><strong>Notes on Financial Projections:</strong></p>
+                <p>This model incorporates the revised revenue and HR structure with realistic projections:</p>
+                <ul>
+                    <li>Year 1 shows significant investment in founding team and infrastructure</li>
+                    <li>Year 2 shows deeper losses as we expand team and development efforts</li>
+                    <li>Year 3 shows continued losses as B2C platform launches with heavy acquisition costs</li>
+                    <li>Years 4-5 show healthy profits as B2C revenue matures and operations stabilize</li>
+                    <li>All cost projections include a 15% buffer for unexpected expenses</li>
+                    <li>B2C revenue projections reduced by 15-20% from earlier estimates for conservatism</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>HR Cost Structure</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>HR Costs (THB)</th>
+                        <th>Growth Rate</th>
+                        <th>Staff Structure</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2025-26</td>
+                        <td>1,000,000 <span class="range">±100K</span></td>
+                        <td>Initial founding team</td>
+                        <td>Five co-founders at ฿200,000 each</td>
+                    </tr>
+                    <tr>
+                        <td>2026-27</td>
+                        <td>2,000,000 <span class="range">±200K</span></td>
+                        <td>+100%</td>
+                        <td>Expanded founding team and first key hires</td>
+                    </tr>
+                    <tr>
+                        <td>2027-28</td>
+                        <td>4,200,000 <span class="range">±420K</span></td>
+                        <td>+110%</td>
+                        <td>Expanded team to 12 roles with B2C platform specialists</td>
+                    </tr>
+                    <tr>
+                        <td>2028-29</td>
+                        <td>5,040,000 <span class="range">±504K</span></td>
+                        <td>+20%</td>
+                        <td>Further team expansion to 15 roles with customer experience focus</td>
+                    </tr>
+                    <tr>
+                        <td>2029-30</td>
+                        <td>6,048,000 <span class="range">±605K</span></td>
+                        <td>+20%</td>
+                        <td>Growth to 18 roles with specialized content curation and marketing</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="small-text">
+                <p><strong>HR Strategy Notes:</strong></p>
+                <p>The HR strategy represents a substantial investment in talent:</p>
+                <ul>
+                    <li>Year 1 focuses on founder compensation to ensure full commitment and sustainability</li>
+                    <li>Year 2 doubles the team with additional expert hires and increased founder compensation</li>
+                    <li>Year 3 represents a significant expansion to support B2C launch with specialized roles</li>
+                    <li>Years 4-5 continue steady growth at 20% annually to maintain sustainable expansion</li>
+                    <li>This compensation structure emphasizes founder investment and long-term talent retention</li>
+                    <li>Salary structures include provisions for annual increases and performance bonuses</li>
+                </ul>
+                <p>All HR cost projections include a 15% uncertainty range to account for potential variations in actual hiring needs and salary negotiations.</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>B2C Revenue Projections (Conservative)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Original B2C Revenue</th>
+                        <th>Revised B2C Revenue</th>
+                        <th>Reduction</th>
+                        <th>Users</th>
+                        <th>ARPU (Monthly)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2025-26</td>
+                        <td>฿0</td>
+                        <td>฿0</td>
+                        <td>N/A</td>
+                        <td>0</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td>2026-27</td>
+                        <td>฿0</td>
+                        <td>฿0</td>
+                        <td>N/A</td>
+                        <td>0</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td>2027-28</td>
+                        <td>฿4,150,000</td>
+                        <td>฿3,400,000 <span class="range">±340K</span></td>
+                        <td>-18.1%</td>
+                        <td>30,000</td>
+                        <td>฿9.44</td>
+                    </tr>
+                    <tr>
+                        <td>2028-29</td>
+                        <td>฿6,700,000</td>
+                        <td>฿5,400,000 <span class="range">±540K</span></td>
+                        <td>-19.4%</td>
+                        <td>35,000</td>
+                        <td>฿12.86</td>
+                    </tr>
+                    <tr>
+                        <td>2029-30</td>
+                        <td>฿9,100,000</td>
+                        <td>฿7,300,000 <span class="range">±730K</span></td>
+                        <td>-19.8%</td>
+                        <td>40,000</td>
+                        <td>฿15.21</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="small-text">
+                <p><strong>B2C Revenue Model Assumptions (Revised):</strong></p>
+                <ul>
+                    <li><strong>Book Sales:</strong> 2.75% of users purchase one book monthly (reduced from 3%) at average price of ฿250 with 30% commission</li>
+                    <li><strong>Subscription:</strong> 4.5% user conversion rate (reduced from 5%) at ฿169/month for access to public domain content</li>
+                    <li><strong>Premium Content:</strong> 1.25% of users purchase premium content at ฿325/year</li>
+                    <li>These conservative estimates reduce original B2C revenue projections by approximately 18-20%</li>
+                </ul>
+                <p>ARPU (Average Revenue Per User) increases over time as engagement and conversion rates improve with product maturity.</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>User Acquisition Costs & Marketing Strategy</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>New Users</th>
+                        <th>Total Users</th>
+                        <th>CPI (THB)</th>
+                        <th>User Acquisition Cost</th>
+                        <th>B2B Marketing</th>
+                        <th>Total Marketing</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2025-26</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>N/A</td>
+                        <td>฿0</td>
+                        <td>฿180,000 <span class="range">±18K</span></td>
+                        <td>฿180,000 <span class="range">±18K</span></td>
+                    </tr>
+                    <tr>
+                        <td>2026-27</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>N/A</td>
+                        <td>฿0</td>
+                        <td>฿300,000 <span class="range">±30K</span></td>
+                        <td>฿300,000 <span class="range">±30K</span></td>
+                    </tr>
+                    <tr>
+                        <td>2027-28</td>
+                        <td>30,000</td>
+                        <td>30,000</td>
+                        <td>฿71.42 <span class="range">±7.14</span></td>
+                        <td>฿2,142,600 <span class="range">±214K</span></td>
+                        <td>฿250,000 <span class="range">±25K</span></td>
+                        <td>฿2,392,600 <span class="range">±239K</span></td>
+                    </tr>
+                    <tr>
+                        <td>2028-29</td>
+                        <td>15,000</td>
+                        <td>35,000</td>
+                        <td>฿71.42 <span class="range">±7.14</span></td>
+                        <td>฿1,071,300 <span class="range">±107K</span></td>
+                        <td>฿200,000 <span class="range">±20K</span></td>
+                        <td>฿1,271,300 <span class="range">±127K</span></td>
+                    </tr>
+                    <tr>
+                        <td>2029-30</td>
+                        <td>15,000</td>
+                        <td>40,000</td>
+                        <td>฿71.42 <span class="range">±7.14</span></td>
+                        <td>฿1,071,300 <span class="range">±107K</span></td>
+                        <td>฿150,000 <span class="range">±15K</span></td>
+                        <td>฿1,221,300 <span class="range">±122K</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="small-text">
+                <p><strong>User Acquisition Strategy:</strong></p>
+                <p>The user acquisition strategy is based on Thailand's CPI of $2 (฿71.42) for app installations, with potential fluctuation of ±10% based on market conditions. According to Business of Apps research, CPI rates in Southeast Asia range from $1.50-$2.50, with $2.00 representing a reasonable median.</p>
+                <p>The plan adopts a measured approach with aggressive user acquisition in Year 3 during the B2C launch (30,000 users), followed by more modest growth of 15,000 new users in Years 4 and 5. This controlled approach balances growth with sustainable marketing costs.</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Unit Economics (Updated with Revised GPU Pricing)</h2>
+            <div class="two-column">
+                <div class="card">
+                    <h3>Thai Book → Thai Audiobook</h3>
+                    <table>
+                        <tr><td>Machine Cost (0.5h × ฿41.06)</td><td>฿20.53 <span class="range">±2.05</span></td></tr>
+                        <tr><td>Editor Cost</td><td>฿669 <span class="range">±67</span></td></tr>
+                        <tr><td>QA Cost</td><td>฿446 <span class="range">±45</span></td></tr>
+                        <tr><td><strong>Total Cost</strong></td><td><strong>฿1,135.53 <span class="range">±114</span></strong></td></tr>
+                        <tr><td><strong>Price</strong></td><td><strong>฿2,000</strong></td></tr>
+                        <tr><td><strong>Margin</strong></td><td class="profit"><strong>฿864.47 (43.2%)</strong></td></tr>
+                    </table>
+                    <p class="small-text">Editor and QA costs increased by 25% to ensure premium quality output. All costs include 15% contingency buffer.</p>
+                </div>
+                
+                <div class="card">
+                    <h3>English Book → Thai Audiobook</h3>
+                    <table>
+                        <tr><td>Machine Cost (2.5h × ฿41.06)</td><td>฿102.65 <span class="range">±10.27</span></td></tr>
+                        <tr><td>Editor Cost (1.5×)</td><td>฿1,003 <span class="range">±100</span></td></tr>
+                        <tr><td>QA Cost (1.5×)</td><td>฿669 <span class="range">±67</span></td></tr>
+                        <tr><td><strong>Total Cost</strong></td><td><strong>฿1,774.65 <span class="range">±177</span></strong></td></tr>
+                        <tr><td><strong>Price</strong></td><td><strong>฿6,000</strong></td></tr>
+                        <tr><td><strong>Margin</strong></td><td class="profit"><strong>฿4,225.35 (70.4%)</strong></td></tr>
+                    </table>
+                    <p class="small-text">Translation quality requires higher editor and QA involvement. GPU pricing based on updated Paperspace A100-8G rate of $1.15/hour (฿41.06/hour).</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Year 2 (2026-27) Cost Structure</h2>
+            <p>The Year 2 cost structure is optimized for B2B operations and B2C development:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cost Category</th>
+                        <th>Annual Cost (THB)</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Founding Team</td>
+                        <td>1,200,000 <span class="range">±120K</span></td>
+                        <td>Five co-founders at ฿240,000 each</td>
+                    </tr>
+                    <tr>
+                        <td>Staff Salaries</td>
+                        <td>800,000 <span class="range">±80K</span></td>
+                        <td>Initial key hires: Technology Lead and Content Specialist</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total HR</strong></td>
+                        <td><strong>2,000,000 <span class="range">±200K</span></strong></td>
+                        <td>7 full-time positions</td>
+                    </tr>
+                    <tr>
+                        <td>Hosting/Tools</td>
+                        <td>180,000 <span class="range">±18K</span></td>
+                        <td>Server costs, software licenses, and tools</td>
+                    </tr>
+                    <tr>
+                        <td>15% Contingency</td>
+                        <td>327,000 <span class="range">±33K</span></td>
+                        <td>Safety buffer for unexpected expenses</td>
+                    </tr>
+                    <tr>
+                        <td>Marketing</td>
+                        <td>300,000 <span class="range">±30K</span></td>
+                        <td>B2B publisher relationships and early B2C preparation</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Costs</strong></td>
+                        <td><strong>2,807,000 <span class="range">±281K</span></strong></td>
+                        <td>Exceeds 2 million THB budget to ensure quality talent and execution</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="small-text">
+                <p>The Year 2 cost structure prioritizes investment in founding team and key hires with competitive salaries significantly above market average to attract and retain top professionals. While this pushes the total beyond the 2 million THB target, the investment in human capital is essential for long-term success and demonstrates to investors our commitment to quality execution.</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Revenue Evolution (Revised B2C)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>B2B Revenue</th>
+                        <th>B2C Revenue</th>
+                        <th>Book Volume</th>
+                        <th>Users</th>
+                        <th>Revenue Split</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2025-26</td>
+                        <td>฿1,350,000 <span class="range">±135K</span></td>
+                        <td>฿0</td>
+                        <td>300 books (200/100)</td>
+                        <td>0</td>
+                        <td>100% B2B</td>
+                    </tr>
+                    <tr>
+                        <td>2026-27</td>
+                        <td>฿1,800,000 <span class="range">±180K</span></td>
+                        <td>฿0</td>
+                        <td>400 books (280/120)</td>
+                        <td>0</td>
+                        <td>100% B2B</td>
+                    </tr>
+                    <tr>
+                        <td>2027-28</td>
+                        <td>฿2,350,000 <span class="range">±235K</span></td>
+                        <td>฿3,400,000 <span class="range">±340K</span></td>
+                        <td>500 books (350/150)</td>
+                        <td>30,000</td>
+                        <td>41% B2B, 59% B2C</td>
+                    </tr>
+                    <tr>
+                        <td>2028-29</td>
+                        <td>฿2,350,000 <span class="range">±235K</span></td>
+                        <td>฿5,400,000 <span class="range">±540K</span></td>
+                        <td>500 books (350/150)</td>
+                        <td>35,000</td>
+                        <td>30% B2B, 70% B2C</td>
+                    </tr>
+                    <tr>
+                        <td>2029-30</td>
+                        <td>฿2,350,000 <span class="range">±235K</span></td>
+                        <td>฿7,300,000 <span class="range">±730K</span></td>
+                        <td>500 books (350/150)</td>
+                        <td>40,000</td>
+                        <td>24% B2B, 76% B2C</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>Key Risks and Mitigation Strategies</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Risk Factor</th>
+                        <th>Impact</th>
+                        <th>Probability</th>
+                        <th>Mitigation Strategy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AI translation quality</td>
+                        <td>High</td>
+                        <td>Medium</td>
+                        <td>Rigorous QA process, dedicated editor review, quality benchmarking</td>
+                    </tr>
+                    <tr>
+                        <td>Publisher adoption</td>
+                        <td>High</td>
+                        <td>Medium</td>
+                        <td>Targeted demos, competitive pricing, exclusivity agreements</td>
+                    </tr>
+                    <tr>
+                        <td>High user acquisition costs</td>
+                        <td>High</td>
+                        <td>High</td>
+                        <td>Phased user acquisition, focus on retention, referral programs</td>
+                    </tr>
+                    <tr>
+                        <td>B2C revenue underperformance</td>
+                        <td>High</td>
+                        <td>Medium</td>
+                        <td>Conservative projections, multiple revenue streams, agile pricing</td>
+                    </tr>
+                    <tr>
+                        <td>HR cost escalation</td>
+                        <td>Medium</td>
+                        <td>Medium</td>
+                        <td>Tiered compensation structure, performance incentives, equity options</td>
+                    </tr>
+                    <tr>
+                        <td>Technology obsolescence</td>
+                        <td>Medium</td>
+                        <td>Low</td>
+                        <td>Continuous technology monitoring, adaptive architecture, R&D investment</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>Strategic Recommendations</h2>
+            <ol>
+                <li><strong>Strong Founding Team:</strong> Invest in full-time founder commitment from the beginning</li>
+                <li><strong>Premium Talent Investment:</strong> Prioritize hiring top-tier talent with competitive compensation</li>
+                <li><strong>Strategic Growth:</strong> Follow the exponential growth in Year 3 followed by stabilized expansion</li>
+                <li><strong>Secure Key Publishers:</strong> Establish relationships with 3-5 major Thai publishers in Year 1</li>
+                <li><strong>User Acquisition Efficiency:</strong> Develop strategies to reduce effective CPI through referral programs</li>
+                <li><strong>Diversified Revenue:</strong> Develop multiple B2C revenue streams beyond subscriptions and book sales</li>
+                <li><strong>Technology Optimization:</strong> Continuously refine AI models to improve quality while reducing costs</li>
+                <li><strong>Strategic Partnerships:</strong> Explore content partnerships with educational institutions and corporate clients</li>
+            </ol>
+        </div>
+        
+        <div class="summary-box">
+            <h2 style="border: none; margin-top: 0;">Conclusion</h2>
+            <p>The Sonar Audiobooks business model represents a balanced approach to building a market-leading Thai audiobook platform. Despite significant upfront investments in founding team and subsequent talent acquisition, the project maintains an attractive 5-Year NPV of ฿3.28 million with an IRR of 37.9%.</p>
+            <p>The model projects losses for the first three years as we build the team, develop the technology platform, and invest in user acquisition. This investment period is followed by strong profitability in Years 4-5, with margins exceeding 20% and continued growth potential beyond the initial 5-year window.</p>
+            <p>With a sustainable HR growth strategy, competitive founder compensation, and conservative revenue projections, this financial model presents a realistic path to success in the Thai audiobook market while acknowledging the substantial investments required. The projected return profile remains highly attractive to investors seeking opportunities in the growing Southeast Asian digital content market.</p>
+        </div>
+        
+        <div class="references">
+            <h3>References</h3>
+            <ul>
+                <li><strong>Salary Data:</strong> <a href="https://th.jobsdb.com/" target="_blank">JobsDB Thailand</a> - Thai job market and salary information</li>
+                <li><strong>Salary Verification:</strong> <a href="http://glassdoor.com/Job/bangkok-jobs-SRCH_IL.0,7_IM1119.htm" target="_blank">Glassdoor Bangkok</a> - Compensation data for similar roles</li>
+                <li><strong>GPU Infrastructure:</strong> <a href="https://www.paperspace.com/pricing" target="_blank">Paperspace Pricing</a> - A100-8G GPU pricing reference (updated)</li>
+                <li><strong>CPI Data:</strong> <a href="https://www.businessofapps.com/ads/cpi/research/cost-per-install/" target="_blank">Business of Apps</a> - Cost-per-install research for Southeast Asia</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Model Assumptions:</strong> 8% discount rate, $2 USD CPI (฿71.42 per user), 80% GPU utilization, book volume split: 70% Thai-Thai/30% English-Thai, conservative user growth to 40,000 by Year 5, 15% contingency buffer on all costs, ±10% uncertainty ranges applied to financial projections</p>
+        </div>
+    </div>
+</body>
+</html>
